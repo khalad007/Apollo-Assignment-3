@@ -13,7 +13,7 @@ router.put(
 );
 router.post(
   '/',
-  // auth('admin'),
+  auth('admin'),
   validateRequest(CarValidation.CarValidationSchema),
   CarControllers.createCar,
 );
