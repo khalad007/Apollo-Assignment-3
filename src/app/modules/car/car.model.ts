@@ -22,11 +22,13 @@ const CarSchema = new Schema<TCar>(
   },
 );
 CarSchema.pre('find', function (next) {
+  {/* @ts-ignore */}
   this.find({ isDeleted: { $ne: true } });
   next();
 });
 
 CarSchema.pre('findOne', function (next) {
+  {/* @ts-ignore */}
   this.find({ isDeleted: { $ne: true } });
   next();
 });
