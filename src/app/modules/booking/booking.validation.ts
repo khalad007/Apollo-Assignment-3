@@ -1,15 +1,16 @@
-import { z } from 'zod';
+import { z } from "zod";
 
-const BookingValidationSchema = z.object({
-  body: z.object({
-    date: z.string(),
-    carId: z.string(),
-    startTime: z.string(),
-    endTime: z.string().nullable().default(null).optional(),
-    totalCost: z.number().min(0).default(0),
-  }),
+const createBookingValidationSchema = z.object({
+    body: z.object({
+        date: z.string({
+            required_error: "Date is required!",
+            invalid_type_error: "Date must be a string!",
+        }),
+        carId: z.string(),
+        startTime: z.string(),
+    }),
 });
 
 export const BookingValidation = {
-  BookingValidationSchema,
+    createBookingValidationSchema,
 };

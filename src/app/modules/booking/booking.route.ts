@@ -1,30 +1,23 @@
-import express from 'express';
+import { Router } from "express";
+import validateRequest from "../../middlewares/validateRequest";
+import { auth } from "../../middlewares/auth";
+import { USER_ROLES } from "../user/user.constant";
+import { BookingValidation } from "./booking.validation";
+import { BookingController } from "./booking.controllers";
 
-import validateRequest from '../../middlewares/validateRequest';
-import auth from '../../middlewares/auth';
-import { BookingValidation } from './booking.validation';
-import { BookingController } from './booking.controller';
-import { CarControllers } from '../car/car.controller';
-import { CarValidation } from '../car/car.validation';
-
-const router = express.Router();
+const router = Router();
 
 router.post(
-  '/',
-  auth('user', 'admin'),
-  validateRequest(BookingValidation.BookingValidationSchema),
-  BookingController.CreateBooking,
+    "/",
+    auth(USER_ROLES.user),
+    validateRequest(BookingValidation.createBookingValidationSchema),
+    BookingController.createBooking
 );
-router.get('/my-bookings', 
-  auth('user'), 
-BookingController.GetMyBooking);
-router.get('/', 
-  auth('admin'), 
-  BookingController.GetAllBookings);
-// router.get('/', CarControllers.GetCar);
-
-// router.get('/:id',CarControllers.GetCarById)
-// router.delete('/:id',CarControllers.DeleteCar)
-// router.put('/:id',auth("admin"),validateRequest(CarValidation.UpdateCarValidationSchema),CarControllers.UpdateCar)
+router.get(
+    "/my-bookings",
+    auth(USER_ROLES.user),
+    BookingController.getUsersBooking
+);
+router.get("/", auth(USER_ROLES.admin), BookingController.getAllBookings);
 
 export const BookingRoutes = router;

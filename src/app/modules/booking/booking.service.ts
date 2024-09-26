@@ -1,61 +1,36 @@
-import httpStatus from 'http-status';
-import AppError from '../../errors/AppError';
-import { TUser } from '../user/user.interface';
-import { TBooking, TBookingData } from './booking.interface';
-import { BookingModel } from './booking.model';
-import { CarModel } from '../car/car.model';
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import httpStatus from "http-status";
+import AppError from "../../errors/AppError";
+import { IBooking } from "./booking.interface";
+import { Booking } from "./booking.model";
+import { Car } from "../car/car.model";
 
-const CreateBookingIntoDb = async (
-  payload: Partial<TBookingData>,
-  userId: string,
-) => {
-  const { carId, ...OtherData } = payload;
-  const data = { ...OtherData, user: userId, car: carId };
-  const findCar = await CarModel.findById(carId);
-  // @ts-ignore
-  if (!findCar || findCar.status == 'unavailable') {
-    throw new AppError(httpStatus.NOT_FOUND, 'This car is not available');
-  }
-  const result = await BookingModel.create(data);
-  const UpdateCar = await CarModel.findByIdAndUpdate(carId, {
-    status: 'unavailable',
-  });
-  if (!result) {
-    throw new AppError(httpStatus.NOT_IMPLEMENTED, "Couldn't done the booking");
-  }
-
-  console.log(result);
-  const findBooking = await BookingModel.findById(result._id)
-    .populate('user')
-    .populate('car');
-
-  return findBooking;
-};
-const GetMyBookingFromDb = async (userId: string) => {
-  const result = await BookingModel.find({ user: userId })
-    .populate('user')
-    .populate('car');
-  return result;
+const createBookingIntoDB = async (payload: IBooking) => {
+    const isCarExists = await Car.findByIdAndUpdate(
+        payload.car,
+        {
+            status: "unavailable",
+        },
+        { new: true }
+    );
+    if (!isCarExists) {
+        throw new AppError(httpStatus.NOT_FOUND, "Car is not found !");
+    }
+    const result = (await Booking.create(payload)).populate("user car");
+    return result;
 };
 
-const GetAllBookingsFromDb = async (params: any) => {
-  const { carId, date } = params;
-  console.log(params);
-  const findObj: any = {};
-  if (carId) {
-    findObj['car'] = carId;
-  }
-  if (date) {
-    findObj['date'] = date;
-  }
-  const result = await BookingModel.find(findObj)
-    .populate('user')
-    .populate('car');
-  return result;
+const getAllBookings = async (query: Record<string, unknown>) => {
+    const result = await Booking.find(query).populate("user car");
+    return result;
 };
 
+const getUsersBooking = async (userId: any) => {
+    const result = await Booking.find({ user: userId }).populate("user car");
+    return result;
+};
 export const BookingServices = {
-  CreateBookingIntoDb,
-  GetMyBookingFromDb,
-  GetAllBookingsFromDb,
-};
+    createBookingIntoDB,
+    getAllBookings,
+    getUsersBooking
+}

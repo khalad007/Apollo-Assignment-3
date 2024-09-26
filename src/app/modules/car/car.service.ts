@@ -1,83 +1,109 @@
-import httpStatus from 'http-status';
-import AppError from '../../errors/AppError';
-import { TCar } from './car.interface';
-import { CarModel } from './car.model';
-import { TBooking } from '../booking/booking.interface';
-import { BookingModel } from '../booking/booking.model';
-import CalculateMoney from './car.utils';
+import httpStatus from "http-status";
+import AppError from "../../errors/AppError";
+import { TCar, TReturnCar } from "./car.interface";
+import { Car } from "./car.model";
+import { Booking } from "../booking/booking.model";
+import { convertTimeToHours } from "../../utils/convertToHourse";
+// import mongoose from "mongoose";
 
-const CreateCarIntoDb = async (payload: TCar) => {
-  const result = await CarModel.create(payload);
-  const savedResult = await CarModel.findById(result._id);
-  return savedResult;
+//create car service
+const createCarIntoDB = async (carData: TCar) => {
+    const result = await Car.create(carData);
+    return result;
+};
+const getAllCarFromDB = async () => {
+    const result = await Car.find();
+
+    return result;
+};
+// get single car form database 
+const getSingleCarFromDB = async (id: string) => {
+    const isCarExists = await Car.findById(id);
+    if (!isCarExists) {
+        throw new AppError(httpStatus.NOT_FOUND, 'Car is not found');
+    }
+    const result = isCarExists;
+    return result;
 };
 
-const GetAllCarsFromDb = async () => {
-  const result = await CarModel.find();
-
-  return result;
+//update car into database
+const updateCarIntoDB = async (id: string, payload: Partial<TCar>) => {
+    const isCarExists = await Car.findById(id);
+    if (!isCarExists) {
+        throw new AppError(httpStatus.NOT_FOUND, "Car is not found !");
+    }
+    const result = await Car.findByIdAndUpdate(id, payload, { new: true });
+    return result;
 };
 
-const GetCarBasedId = async (id: string) => {
-  const result = await CarModel.findById(id);
-  if (!result) {
-    throw new AppError(httpStatus.NOT_FOUND, "Didn't found any Car");
-  }
-  return result;
+const deleteCarFromDB = async (id: string) => {
+    const isCarExists = await Car.findById(id);
+    if (!isCarExists) {
+        throw new AppError(httpStatus.NOT_FOUND, "Car is not found !");
+    }
+    const result = await Car.findByIdAndUpdate(
+        id,
+        { isDeleted: true },
+        { new: true }
+    );
+    return result;
 };
+const returnCarFromDB = async (payload: TReturnCar) => {
+    // const session = await mongoose.startSession();
 
-const DeleteCarInToDb = async (id: string) => {
-  const result = await CarModel.findByIdAndUpdate(
-    id,
-    { isDeleted: true },
-    { new: true },
-  );
-  return result;
+    const isBookingExists = await Booking.findById(payload.bookingId);
+
+    if (!isBookingExists) {
+        throw new AppError(httpStatus.NOT_FOUND, "Booking is not found !");
+    }
+    const isCarExists = await Car.findByIdAndUpdate(
+        isBookingExists.car,
+        {
+            status: "available",
+        },
+        {
+            new: true,
+
+        }
+    );
+    if (!isCarExists) {
+        throw new AppError(httpStatus.NOT_FOUND, "Car is not found !");
+    }
+    const startHours = convertTimeToHours(isBookingExists.startTime);
+    const endHours = convertTimeToHours(payload.endTime);
+    let durationHours = endHours - startHours;
+    if (durationHours < 0) {
+        durationHours += 24;
+    }
+    const totalCost = Number(durationHours) * Number(isCarExists.pricePerHour);
+    const updatedBooking = await Booking.findByIdAndUpdate(
+        payload.bookingId,
+        {
+            endTime: payload.endTime,
+            totalCost,
+        },
+        {
+            new: true,
+
+        }
+    ).populate("user car");
+    // await session.commitTransaction();
+    // await session.endSession();
+    return updatedBooking;
+
+
+
+
+
+
+
 };
-
-const UpdateCarIntoDb = async (id: string, payload: Partial<TCar>) => {
-  const result = await CarModel.findByIdAndUpdate(id, payload, {
-    new: true,
-    runValidators: true,
-  });
-  return result;
-};
-
-const ReturnCarFromDb = async (payload: any) => {
-  // console.log(payload.bookingId,"f")
-
-  const UpdateData = await BookingModel.findOne({ _id: payload.bookingId })
-    .populate('user')
-    .populate('car');
-  // @ts-ignore
-  if (!UpdateData) {
-    throw new AppError(httpStatus.FORBIDDEN, "Coludn't find the booking data");
-  }
-  const money = CalculateMoney(UpdateData, payload.endTime);
-  const UpdateCar = await CarModel.findOneAndUpdate(
-    { _id: UpdateData.car._id },
-    { status: 'available' },
-  );
-  // console.log(UpdateCar)
-  const resultdata = await BookingModel.findOneAndUpdate(
-    { _id: payload.bookingId },
-    {
-      endTime: payload.endTime,
-      totalCost: money,
-    },
-    { new: true },
-  );
-
-  const findData = await BookingModel.findOne({ _id: payload.bookingId }).populate('user')
-  .populate('car');
-
-  return findData;
-};
+// export car services
 export const CarServices = {
-  CreateCarIntoDb,
-  GetCarBasedId,
-  GetAllCarsFromDb,
-  DeleteCarInToDb,
-  UpdateCarIntoDb,
-  ReturnCarFromDb,
-};
+    createCarIntoDB,
+    getAllCarFromDB,
+    getSingleCarFromDB,
+    updateCarIntoDB,
+    deleteCarFromDB,
+    returnCarFromDB
+};  

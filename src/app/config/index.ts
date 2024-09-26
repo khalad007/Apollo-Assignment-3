@@ -4,10 +4,15 @@ import path from 'path';
 dotenv.config({ path: path.join((process.cwd(), '.env')) });
 
 export default {
-  node_env: process.env.NODE_ENV,
-  port: process.env.PORT,
-  database_url: process.env.DATABASE_URL,
-  bcrypt_salt_rounds: process.env.BCRYPT_SALT_ROUNDS,
-  default_password: process.env.DEFAULT_PASS,
-  secret_access_token: process.env.SECRET_ACCESS_TOKEN,
+    NODE_ENV: process.env.NODE_ENV,
+    port: process.env.PORT,
+    database_url: process.env.DATABASE_URL,
+    bcrypt_salt_rounds: process.env.BCRYPT_SALT_ROUNDS,
+    default_password: process.env.DEFAULT_PASS,
+    JWT_ACCRESS_SECRET: process.env.JWT_ACCRESS_SECRET,
+    JWT_REFRESH_SECRET: process.env.JWT_REFRESH_SECRET,
+    JWT_ACCESS_EXPIRES_IN: process.env.JWT_ACCESS_EXPIRES_IN,
+    JWT_REFRESH_EXPIRES_IN: process.env.JWT_REFRESH_EXPIRES_IN,
+
+
 };

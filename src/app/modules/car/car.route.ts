@@ -1,34 +1,38 @@
-import express from 'express';
+import { Router } from "express";
+import { CarController } from "./car.controller";
+import validateRequest from "../../middlewares/validateRequest";
+import { CarValidations } from "./car.validation";
+import { USER_ROLES } from "../user/user.constant";
+import { auth } from "../../middlewares/auth";
 
-import validateRequest from '../../middlewares/validateRequest';
-import { CarValidation } from './car.validation';
-import { CarControllers } from './car.controller';
-import auth from '../../middlewares/auth';
 
-const router = express.Router();
-router.put(
-  '/return',
-  validateRequest(CarValidation.ReturnCarValidationSchema),
-  CarControllers.ReturnCar,
-);
+
+const router = Router();
+
 router.post(
-  '/',
-  // auth('admin'),
-  validateRequest(CarValidation.CarValidationSchema),
-  CarControllers.createCar,
+    "/",
+    auth(USER_ROLES.admin),
+    validateRequest(CarValidations.createCarValidationSchema),
+    CarController.createCar
 );
 
-router.get('/', CarControllers.GetCar);
+router.get("/", CarController.getAllCar);
 
-router.get('/:id', CarControllers.GetCarById);
-router.delete('/:id', 
-  auth('admin'),
- CarControllers.DeleteCar);
+router.get("/:id", CarController.getSingleCar);
+
 router.put(
-  '/:id',
-  auth('admin'),
-  validateRequest(CarValidation.UpdateCarValidationSchema),
-  CarControllers.UpdateCar,
+    "/return",
+    auth(USER_ROLES.admin),
+    validateRequest(CarValidations.returnCarValidationSchema),
+    CarController.retrunAndUpdate
 );
+
+router.put(
+    "/:id",
+    auth(USER_ROLES.admin),
+    validateRequest(CarValidations.updateCarValidationSchema),
+    CarController.retrunAndUpdate
+);
+router.delete("/:id", CarController.deleteCar)
 
 export const CarRoutes = router;
